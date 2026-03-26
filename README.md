@@ -28,7 +28,7 @@ These RFCs document our answers — battle-tested through months of real-world o
 | [003](003-handoff.md) | File-Based Handoff: The Filesystem as Message Bus | Planned | Why is the filesystem the most reliable agent communication bus? |
 | [004](004-context-bridge.md) | Context Bridge: Cross-Session Memory Persistence | Planned | How should agent "experience" accumulate and transfer? |
 | [005](005-workflow-tiers.md) | Three-Tier Workflow: Risk-Graded Human-AI Collaboration | Planned | How do you design brakes for autonomous agents? |
-| [006](006-openclaw.md) | OpenClaw: Unified Human-Agent Task Scheduling | Planned | Why must future task systems treat humans and AI as peers? |
+| [006](006-task-scheduler.md) | Unified Human-Agent Task Scheduling | Planned | Why must future task systems treat humans and AI as peers? |
 
 ## Design Principles
 
@@ -55,8 +55,8 @@ These RFCs document our answers — battle-tested through months of real-world o
     ┌────────────┼────────────┐
     │            │            │
 ┌───┴───┐  ┌────┴───┐  ┌────┴────┐
-│  CC   │  │ Echo   │  │  Duty   │
-│(Brain)│  │(Router)│  │ (Cron)  │
+│ Brain │  │ Router │  │Scheduler│
+│(Agent)│  │(Agent) │  │ (Cron)  │
 └───┬───┘  └────┬───┘  └────┬────┘
     │           │            │
     └─────┬─────┘      ┌────┴────┐

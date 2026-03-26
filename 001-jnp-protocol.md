@@ -1,13 +1,13 @@
 # RFC-001: JNP — Asynchronous Inter-Agent Communication Protocol
 
 > **Status**: Draft
-> **Author**: Ruifeng Cong (AetherOS Team)
+> **Author**: AetherOS Team
 > **Created**: 2026-03-26
 > **Version**: Based on JNP v1.1 production specification
 
 ## Abstract
 
-The Jack Nerve Protocol (JNP) is an asynchronous, file-based communication protocol designed for coordinating AI agent clusters running on local infrastructure. Unlike synchronous RPC or API-based agent communication, JNP treats inter-agent messages as **self-describing documents** that can be stored, forwarded, audited, and replayed — making the entire communication history inspectable and recoverable.
+The Joint Nerve Protocol (JNP) is an asynchronous, file-based communication protocol designed for coordinating AI agent clusters running on local infrastructure. Unlike synchronous RPC or API-based agent communication, JNP treats inter-agent messages as **self-describing documents** that can be stored, forwarded, audited, and replayed — making the entire communication history inspectable and recoverable.
 
 This RFC describes the protocol design, the reasoning behind key decisions, and lessons learned from months of production use.
 
@@ -53,13 +53,13 @@ The most controversial decision: every JNP message is a Markdown file with YAML 
 
 ```markdown
 ---
-msg_id: "20260320-1430-prod-cc-P1-deploy-report"
-author: prod-cc
+msg_id: "20260320-1430-node-alpha-P1-deploy-report"
+author: node-alpha
 ts: "2026-03-20T14:30:00+08:00"
 priority: P1
 type: result
-to: [dev-cc]
-ref: "20260320-0900-dev-cc-P1-deploy-task"
+to: [node-beta]
+ref: "20260320-0900-node-beta-P1-deploy-task"
 ---
 
 # Deployment Report
@@ -113,15 +113,15 @@ JNP message filenames encode key metadata:
 
 ```
 YYYYMMDD-HHMM-{author}-{priority}-{slug}.md
-20260320-1430-prod-cc-P1-deploy-report.md
+20260320-1430-node-alpha-P1-deploy-report.md
 ```
 
 **Why?** Because `ls -lt inbox/` becomes a dashboard:
 
 ```
-20260320-1430-prod-cc-P0-gateway-down.md    ← Critical alert
-20260320-1420-dev-cc-P1-test-result.md      ← Test completed
-20260320-1400-prod-zhishou-FYI-cron-ok.md   ← Routine update
+20260320-1430-node-alpha-P0-gateway-down.md    ← Critical alert
+20260320-1420-node-beta-P1-test-result.md      ← Test completed
+20260320-1400-node-cron-FYI-cron-ok.md         ← Routine update
 ```
 
 Without opening any file, you can see: who sent it, when, how urgent, and roughly what it's about. This is invaluable during incident response.
@@ -148,7 +148,7 @@ This prevents the "message sent into void" problem without requiring every messa
 In a system with periodic `rsync` between machines, the same file may arrive multiple times. JNP v1.1 introduced idempotency keys:
 
 ```yaml
-msg_id: "20260320-1907-dev-cx-FYI-research-result"
+msg_id: "20260320-1907-node-beta-FYI-research-result"
 idempotency_key: "research-manual-run-1"
 ```
 
@@ -177,9 +177,9 @@ Not every node can talk to every other node. AetherOS defines an explicit commun
 ```yaml
 # allowed-flows.yaml (simplified)
 flows:
-  - from: prod-cc → to: dev-cc      # PROD ↔ DEV bilateral
-  - from: prod-cc → to: prod-echo   # CC → OpenClaw
-  - from: prod-cc → to: prod-zhishou # CC → Duty Officer
+  - from: node-alpha → to: node-beta       # PROD ↔ DEV bilateral
+  - from: node-alpha → to: node-router     # Brain → Router
+  - from: node-alpha → to: node-scheduler  # Brain → Scheduler
   # ... 14 flows total
 ```
 
@@ -192,7 +192,7 @@ Messages addressed to unreachable nodes are rejected at routing time with a clea
 ```yaml
 to: []          # Empty = all nodes process
 to: [all]       # Explicit broadcast
-to: [dev-*]     # Wildcard matching
+to: [cluster-b-*]   # Wildcard matching
 ```
 
 ---
@@ -263,7 +263,7 @@ JNP provides no message ordering guarantees beyond timestamps. Two messages sent
 ### Required fields (all messages)
 
 ```yaml
-author: string       # Node ID of sender (e.g., "prod-cc")
+author: string       # Node ID of sender (e.g., "node-alpha")
 ts: string           # ISO 8601 timestamp with timezone (e.g., "2026-03-20T14:30:00+08:00")
 priority: enum       # P0 | P1 | P2 | FYI
 type: enum           # task | result | alert | decision | sync | fyi
